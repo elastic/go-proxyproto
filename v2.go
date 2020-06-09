@@ -98,6 +98,18 @@ func parseVersion2(reader *bufio.Reader) (header *Header, err error) {
 		return nil, ErrInvalidLength
 	}
 
+	// if local then we should just skip the rest of the header as per spec
+	// 	When a sender presents a LOCAL connection, it should not present any 
+	// address so it sets this field to zero. Receivers MUST always consider 
+	// this field to skip the appropriate number of bytes and must not assume
+	// zero is presented for LOCAL connections.
+	if header.Command.IsLocal() {
+		if _, err := reader.Discard(int(length)); err != nil {
+			return nil, ErrInvalidAddress
+		}
+		return header, nil
+	}
+
 	// Length-limited reader for payload section
 	payloadReader := io.LimitReader(reader, int64(length)).(*io.LimitedReader)
 
@@ -150,6 +162,10 @@ func (header *Header) formatVersion2() ([]byte, error) {
 	buf.Write(SIGV2)
 	buf.WriteByte(header.Command.toByte())
 	buf.WriteByte(header.TransportProtocol.toByte())
+	if header.Command.IsLocal() {
+		buf.Write([]byte{'\x00','\x00'})
+		return buf.Bytes(), nil
+	}
 	var addrSrc, addrDst []byte
 	if header.TransportProtocol.IsIPv4() {
 		hdrLen, err := addTLVLen(lengthV4Bytes, len(header.rawTLVs))
@@ -197,7 +213,9 @@ func (header *Header) formatVersion2() ([]byte, error) {
 }
 
 func (header *Header) validateLength(length uint16) bool {
-	if header.TransportProtocol.IsIPv4() {
+	if header.Command.IsLocal() {
+		return true
+	} else if header.TransportProtocol.IsIPv4() {
 		return length >= lengthV4
 	} else if header.TransportProtocol.IsIPv6() {
 		return length >= lengthV6
