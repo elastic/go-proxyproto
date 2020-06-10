@@ -148,13 +148,16 @@ func parseVersion2(reader *bufio.Reader) (header *Header, err error) {
 	//}
 	//}
 
-	// Copy bytes for optional Type-Length-Value vector
-	header.rawTLVs = make([]byte, payloadReader.N) // Allocate minimum size slice
-	if _, err = io.ReadFull(payloadReader, header.rawTLVs); err != nil && err != io.EOF {
-		return nil, err
-	}
-
+	//binary check - discard the TLVs
 	return header, nil
+
+	// Copy bytes for optional Type-Length-Value vector
+	// header.rawTLVs = make([]byte, payloadReader.N) // Allocate minimum size slice
+	// if _, err = io.ReadFull(payloadReader, header.rawTLVs); err != nil && err != io.EOF {
+	// 	return nil, err
+	// }
+
+	// return header, nil
 }
 
 func (header *Header) formatVersion2() ([]byte, error) {
