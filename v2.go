@@ -82,7 +82,9 @@ func parseVersion2(reader *bufio.Reader) (header *Header, err error) {
 	}
 	header.TransportProtocol = AddressFamilyAndProtocol(b14)
 	if _, ok := supportedTransportProtocol[header.TransportProtocol]; !ok {
-		return nil, ErrUnsupportedAddressFamilyAndProtocol
+		if !(header.Command.IsLocal() && header.TransportProtocol == UNSPEC) {
+			return nil, ErrUnsupportedAddressFamilyAndProtocol
+		}
 	}
 
 	// Make sure there are bytes available as specified in length
