@@ -136,6 +136,19 @@ var validParseAndWriteV2Tests = []struct {
 			DestinationPort:    0,
 		},
 	},
+	// LOCAL UNSPEC
+	{
+		newBufioReader(append(append(SIGV2, LOCAL, UNSPEC), fixtureIPv4V2...)),
+		&Header{
+			Version:            2,
+			Command:            LOCAL,
+			TransportProtocol:  UNSPEC,
+			SourceAddress:      nil,
+			DestinationAddress: nil,
+			SourcePort:         0,
+			DestinationPort:    0,
+		},
+	},
 	// PROXY TCP IPv4
 	{
 		newBufioReader(append(append(SIGV2, PROXY, TCPv4), fixtureIPv4V2...)),
